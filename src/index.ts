@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express"
+import express, { Request, response, Response } from "express"
 import zod from "zod"
 import { prisma } from "./db/client"
 
@@ -6,7 +6,6 @@ const app = express()
 
 app.use(express.json())
 
-// TODO-1: Add if/catch blocks to handle db level errors
 // TODO-2: Test the functionality of enpoint by creating a automated test script running all the possible cases.
 // TODO-3: Add modularity by seperating the route to ./routes/identify.ts and zod type to ./schemas/contact.ts
 // TODO-4: Recheck and finalize code for deployment / submission
@@ -36,32 +35,47 @@ app.post("/identify", async (req: Request, res: Response) => {
     const inputData = parsed.data
 
     // Get all existing contacts with either the same email or phoneNumber
-    const existingContacts = await prisma.contact.findMany({
-        where: {
-            OR: [
-                {email: inputData.email},
-                {phoneNumber: inputData.phoneNumber}
-            ]
-        }
-    })
+    let existingContacts = []
+    try {
+        existingContacts = await prisma.contact.findMany({
+            where: {
+                OR: [
+                    {email: inputData.email},
+                    {phoneNumber: inputData.phoneNumber}
+                ]
+            }
+        })
+    } catch (error) {
+        console.error("Error fetching existing contacts:", error)
+        return res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
 
     // if there are no existing contact, create a primary contact with input
     if (existingContacts.length === 0) {
-        const newContact = await prisma.contact.create({
-            data: {
-                email: inputData.email,
-                phoneNumber: inputData.phoneNumber
-            }
-        })
+        try {
+            const newContact = await prisma.contact.create({
+                data: {
+                    email: inputData.email,
+                    phoneNumber: inputData.phoneNumber
+                }
+            })
 
-        return res.status(200).json({
-            contact: {
-                primaryContactId: newContact.id,
-                emails: [newContact.email].filter(Boolean),
-                phoneNumbers: [newContact.phoneNumber].filter(Boolean),
-                secondaryContactIds: []
-            }
-        })
+            return res.status(200).json({
+                contact: {
+                    primaryContactId: newContact.id,
+                    emails: [newContact.email].filter(Boolean),
+                    phoneNumbers: [newContact.phoneNumber].filter(Boolean),
+                    secondaryContactIds: []
+                }
+            })   
+        } catch (error) {
+            console.error("Error creating new contact:", error)
+            return res.status(500).json({
+                message: "Internal Server Error"
+            })
+        }
     }
 
     // get the primary contacts
@@ -80,31 +94,46 @@ app.post("/identify", async (req: Request, res: Response) => {
             .filter(contact => contact.id !== primaryContact.id)
             .map(contact => contact.id)
         
-        await prisma.contact.updateMany({
-            where: {
-                id: {in: otherPrimaryIds}
-            },
-            data: {
-                linkedId: primaryContact.id,
-                linkPrecedence: "secondary",
-                updatedAt: new Date()
-            }
-        })
+        try {
+            await prisma.contact.updateMany({
+                where: {
+                    id: {in: otherPrimaryIds}
+                },
+                data: {
+                    linkedId: primaryContact.id,
+                    linkPrecedence: "secondary",
+                    updatedAt: new Date()
+                }
+            })
+        } catch (error) {
+            console.error("Error updating contacts:", error)
+            res.status(500).json({
+                message: "Internal Server Error"
+            })
+        }
     }
+
     // check if the input contact details is already known
     const alreadyKnown = existingContacts
         .some(contact => contact.email === inputData.email && contact.phoneNumber === inputData.phoneNumber)
 
     // If there is new information, create a secondary contact
     if (!alreadyKnown) {
-        await prisma.contact.create({
-            data: {
-                email: inputData.email,
-                phoneNumber: inputData.phoneNumber,
-                linkedId: primaryContact?.id,
-                linkPrecedence: "secondary"
-            }
-        })
+        try {
+            await prisma.contact.create({
+                data: {
+                    email: inputData.email,
+                    phoneNumber: inputData.phoneNumber,
+                    linkedId: primaryContact?.id,
+                    linkPrecedence: "secondary"
+                }
+            })
+        } catch (error) {
+            console.error("Error creating secondary contact:", error)
+            res.status(500).json({
+                message: "Internal Server Error"
+            })
+        }
     }
 
     // Fetch all the linked contacts
