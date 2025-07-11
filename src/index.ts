@@ -83,6 +83,22 @@ app.post("/identify", async (req: Request, res: Response) => {
             }
         })
     }
+    // check if the input contact details is already known
+    const alreadyKnown = existingContacts
+        .some(contact => contact.email === inputData.email && contact.phoneNumber === inputData.phoneNumber)
+
+    // If there is new information, create a secondary contact
+    if (!alreadyKnown) {
+        await prisma.contact.create({
+            data: {
+                email: inputData.email,
+                phoneNumber: inputData.phoneNumber,
+                linkedId: primaryContact?.id,
+                linkPrecedence: "secondary"
+            }
+        })
+    }
+
 })
 
 app.listen(3000, () => {
