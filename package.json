@@ -4,7 +4,9 @@
   "description": "Backend task by Bitespeed",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "author": "Vikram Ramji Iyer",
   "license": "ISC",
