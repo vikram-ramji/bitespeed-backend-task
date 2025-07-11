@@ -6,6 +6,14 @@ const app = express()
 
 app.use(express.json())
 
+// TODO-1: Add if/catch blocks to handle db level errors
+// TODO-2: Test the functionality of enpoint by creating a automated test script running all the possible cases.
+// TODO-3: Add modularity by seperating the route to ./routes/identify.ts and zod type to ./schemas/contact.ts
+// TODO-4: Recheck and finalize code for deployment / submission
+// TODO-5: Add Readme
+// TODO-6: Deploy the backend api service
+// TODO-7: Submit the task
+
 const ContactInput = zod.object({
     email: zod.email().optional(),
     phoneNumber: zod.string().optional()
