@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "pnpm install && prisma generate && tsc",
     "start": "node dist/index.js"
   },
   "author": "Vikram Ramji Iyer",
