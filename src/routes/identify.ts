@@ -21,8 +21,8 @@ export const IdentifyContact = async (req: Request, res: Response) => {
         existingContacts = await prisma.contact.findMany({
             where: {
                 OR: [
-                    {email: inputData.email},
-                    {phoneNumber: inputData.phoneNumber}
+                    ...(inputData.email ? [{ email: inputData.email }] : []),
+                    ...(inputData.phoneNumber ? [{ phoneNumber: inputData.phoneNumber }] : [])
                 ]
             }
         })
@@ -94,17 +94,21 @@ export const IdentifyContact = async (req: Request, res: Response) => {
         }
     }
 
-    // check if the input contact details is already known
-    const alreadyKnown = existingContacts
-        .some(contact => contact.email === inputData.email && contact.phoneNumber === inputData.phoneNumber)
+    // Check if the input contact is already known
+    const alreadyKnown = existingContacts.some(contact => {
+        const emailMatch = inputData.email ? contact.email === inputData.email : true;
+        const phoneMatch = inputData.phoneNumber ? contact.phoneNumber === inputData.phoneNumber : true;
+        return emailMatch && phoneMatch;
+    });
+
 
     // If there is new information, create a secondary contact
     if (!alreadyKnown) {
         try {
             await prisma.contact.create({
                 data: {
-                    email: inputData.email,
-                    phoneNumber: inputData.phoneNumber,
+                    email: inputData.email || null,
+                    phoneNumber: inputData.phoneNumber || null,
                     linkedId: primaryContact?.id,
                     linkPrecedence: "secondary"
                 }
