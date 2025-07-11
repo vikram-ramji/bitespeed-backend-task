@@ -55,6 +55,34 @@ app.post("/identify", async (req: Request, res: Response) => {
             }
         })
     }
+
+    // get the primary contacts
+    const primaryContacts = existingContacts.filter(contact => contact.linkPrecedence === "primary")
+    let primaryContact = primaryContacts[0]
+
+    // if there are multiple primary contacts, the oldest contact must remail primary while all others
+    // must be changed to secondary contacts
+    if (primaryContacts.length > 1) {
+        primaryContact = primaryContacts.reduce(
+            (previousContact, currentContact) => 
+                currentContact.createdAt < previousContact.createdAt ? currentContact : previousContact
+        )
+        
+        const otherPrimaryIds = primaryContacts
+            .filter(contact => contact.id !== primaryContact.id)
+            .map(contact => contact.id)
+        
+        await prisma.contact.updateMany({
+            where: {
+                id: {in: otherPrimaryIds}
+            },
+            data: {
+                linkedId: primaryContact.id,
+                linkPrecedence: "secondary",
+                updatedAt: new Date()
+            }
+        })
+    }
 })
 
 app.listen(3000, () => {
