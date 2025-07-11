@@ -1,0 +1,16 @@
+{
+  "name": "bitespeed-backend-task",
+  "version": "1.0.0",
+  "description": "Backend task by Bitespeed",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vikram Ramji Iyer",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "dependencies": {
+    "@types/node": "^24.0.13",
+    "typescript": "^5.8.3"
+  }
+}
