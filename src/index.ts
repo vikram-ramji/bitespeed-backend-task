@@ -5,10 +5,7 @@ const app = express()
 
 app.use(express.json())
 
-// TODO-5: Add Readme
-// TODO-6: Deploy the backend api service
-// TODO-7: Submit the task
-
+// health check for deployment
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: "OK",
