@@ -1,15 +1,15 @@
-import axios from "axios";
+import axios from "axios"
 
-const baseURL = "http://localhost:3000"; // Change if needed
+const baseURL = "http://localhost:3000" // Change if needed
 
 type ContactResponse = {
   contact: {
-    primaryContactId: number;
-    emails: string[];
-    phoneNumbers: string[];
-    secondaryContactIds: number[];
-  };
-};
+    primaryContactId: number
+    emails: string[]
+    phoneNumbers: string[]
+    secondaryContactIds: number[]
+  }
+}
 
 const testCases = [
   {
@@ -55,3 +55,56 @@ const testCases = [
     expectFailure: true,
   },
 ];
+
+(async () => {
+  let primaryId: number | null = null
+
+  for (const testCase of testCases) {
+    try {
+      const res = await axios.post<ContactResponse>(`${baseURL}/identify`, testCase.input)
+      const data = res.data.contact
+
+      console.log(testCase.description)
+
+      if (testCase.setupNote) {
+        console.log(testCase.setupNote)
+      }
+      
+      console.log("Input:", testCase.input)
+      console.log("Response:", data)
+
+      // Save primary ID from Case 1 for validation
+      if (testCase.description.includes("Case 1")) {
+        primaryId = data.primaryContactId
+      }
+
+      // Validate primary consistency
+      if (
+        primaryId &&
+        testCase.description.startsWith("Case") &&
+        !testCase.description.startsWith("Case 1") &&
+        !testCase.description.startsWith("Case 7") // Case 7 allows merge
+      ) {
+        if (data.primaryContactId !== primaryId) {
+          console.warn(
+            `Expected primaryContactId to be ${primaryId}, but got ${data.primaryContactId}`
+          )
+        }
+      }
+    } catch (err: any) {
+      if (testCase.expectFailure) {
+        console.log(`${testCase.description} (Properly failed as expected)`)
+        console.log("Error response:", err.response?.data)
+      } else {
+        console.error(`${testCase.description}`)
+        if (err.response) {
+          console.error("Response:", err.response.data)
+        } else {
+          console.error(err.message)
+        }
+      }
+    }
+
+    console.log("#----------------------------#")
+  }
+})()
