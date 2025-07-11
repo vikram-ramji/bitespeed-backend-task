@@ -26,6 +26,35 @@ app.post("/identify", async (req: Request, res: Response) => {
 
     // Get the validated inputData fully typed
     const inputData = parsed.data
+
+    // Get all existing contacts with either the same email or phoneNumber
+    const existingContacts = await prisma.contact.findMany({
+        where: {
+            OR: [
+                {email: inputData.email},
+                {phoneNumber: inputData.phoneNumber}
+            ]
+        }
+    })
+
+    // if there are no existing contact, create a primary contact with input
+    if (existingContacts.length === 0) {
+        const newContact = await prisma.contact.create({
+            data: {
+                email: inputData.email,
+                phoneNumber: inputData.phoneNumber
+            }
+        })
+
+        return res.status(200).json({
+            contact: {
+                primaryContactId: newContact.id,
+                emails: [newContact.email].filter(Boolean),
+                phoneNumbers: [newContact.phoneNumber].filter(Boolean),
+                secondaryContactIds: []
+            }
+        })
+    }
 })
 
 app.listen(3000, () => {
