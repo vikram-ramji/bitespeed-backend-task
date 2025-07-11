@@ -126,6 +126,16 @@ app.post("/identify", async (req: Request, res: Response) => {
     const secondaryContactIds = allLinkedContacts
         .filter(contact => contact.linkPrecedence === "secondary")
         .map(contact => contact.id)
+
+    // Resturn response as json
+    return res.status(200).json({
+        contact: {
+            primaryContactId: primaryContact?.id,
+            emails: linkedEmails,
+            phoneNumbers: linkedPhoneNumbers,
+            secondaryContactIds: secondaryContactIds
+        }
+    })
 })
 
 app.listen(3000, () => {
