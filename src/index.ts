@@ -99,7 +99,7 @@ app.post("/identify", async (req: Request, res: Response) => {
         })
     }
 
-    // Fetch all the linked contacts (again)
+    // Fetch all the linked contacts
     const allLinkedContacts = await prisma.contact.findMany({
         where: {
             OR: [
@@ -108,6 +108,24 @@ app.post("/identify", async (req: Request, res: Response) => {
         }
     })
 
+    // Build the response data
+    const linkedEmails = [
+        ...new Set([
+            primaryContact?.email, //Ensuring the first email is primary email
+            ...allLinkedContacts.map(contact => contact.email).filter(Boolean)
+        ])
+    ]
+
+    const linkedPhoneNumbers = [
+        ...new Set([
+            primaryContact?.phoneNumber, //Ensuring the first phone-number is primary phone-number
+            ...allLinkedContacts.map(contact => contact.phoneNumber).filter(Boolean)
+        ])
+    ]
+
+    const secondaryContactIds = allLinkedContacts
+        .filter(contact => contact.linkPrecedence === "secondary")
+        .map(contact => contact.id)
 })
 
 app.listen(3000, () => {
