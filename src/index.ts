@@ -99,6 +99,15 @@ app.post("/identify", async (req: Request, res: Response) => {
         })
     }
 
+    // Fetch all the linked contacts (again)
+    const allLinkedContacts = await prisma.contact.findMany({
+        where: {
+            OR: [
+                {linkedId: primaryContact.id}
+            ]
+        }
+    })
+
 })
 
 app.listen(3000, () => {
